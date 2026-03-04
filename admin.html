@@ -355,7 +355,11 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── AUTH ──
+// ── Supabase API Import ──
+const supabaseScript = document.createElement('script');
+supabaseScript.type = 'module';
+supabaseScript.src = 'supabase.js';
+document.head.appendChild(supabaseScript);
 const ADMIN_PASS_KEY = 'wf_admin_pass';
 const DEFAULT_PASS = 'themagoyes';
 const SESSION_KEY = 'wf_admin_session';
@@ -414,9 +418,15 @@ let members = [];
 let editingUpdateId = null;
 
 function loadUpdates() {
-  const stored = localStorage.getItem(U_KEY);
-  updates = stored ? JSON.parse(stored) : [...DEFAULT_UPDATES];
-  if (!stored) localStorage.setItem(U_KEY, JSON.stringify(DEFAULT_UPDATES));
+  if (!window.getUpdates) {
+    setTimeout(loadUpdates, 500);
+    return;
+  }
+  window.getUpdates().then(data => {
+    updates = Array.isArray(data) ? data : [];
+    renderUpdatesTable();
+    updateStats();
+  });
 }
 
 function loadMembers() {
@@ -424,7 +434,9 @@ function loadMembers() {
   members = stored ? JSON.parse(stored) : [];
 }
 
-function saveUpdates() { localStorage.setItem(U_KEY, JSON.stringify(updates)); }
+async function saveUpdates() {
+  // No-op: handled by Supabase API
+}
 function saveMembers() { localStorage.setItem(M_KEY, JSON.stringify(members)); }
 
 function updateStats() {
@@ -497,7 +509,7 @@ function editUpdate(id) {
   document.getElementById('updateFormPanel').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function saveUpdate() {
+async function saveUpdate() {
   const title  = document.getElementById('uf-title').value.trim();
   const tag    = document.getElementById('uf-tag').value;
   const rawDate= document.getElementById('uf-date').value;
@@ -516,26 +528,32 @@ function saveUpdate() {
     desc,
   };
 
+  if (!window.addUpdate || !window.updateUpdate) {
+    showToast('Supabase API not loaded','error');
+    return;
+  }
   if (editingUpdateId !== null) {
-    const idx = updates.findIndex(u=>u.id===editingUpdateId);
-    if (idx>-1) updates[idx] = {...updates[idx], ...data};
+    await window.updateUpdate(editingUpdateId, data);
     showToast('Update saved');
   } else {
-    data.id = Date.now();
-    updates.unshift(data);
+    await window.addUpdate(data);
     showToast('Update published');
   }
-
-  saveUpdates(); renderUpdatesTable(); updateStats();
+  loadUpdates();
   toggleUpdateForm(true);
 }
 
 function deleteUpdate(id) {
   const u = updates.find(x=>x.id===id);
   if (!u || !confirm(`Delete "${u.title}"? This cannot be undone.`)) return;
-  updates = updates.filter(x=>x.id!==id);
-  saveUpdates(); renderUpdatesTable(); updateStats();
-  showToast('Update deleted');
+  if (!window.deleteUpdate) {
+    showToast('Supabase API not loaded','error');
+    return;
+  }
+  window.deleteUpdate(id).then(() => {
+    showToast('Update deleted');
+    loadUpdates();
+  });
 }
 
 // ── MEMBERS TABLE ──

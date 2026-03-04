@@ -672,8 +672,66 @@ function extractYear(s){const m=s&&s.match(/\d{4}/);return m?m[0]:s||''}
 function hashStr(s){let h=0;for(let c of s)h=(Math.imul(31,h)+c.charCodeAt(0))|0;return Math.abs(h)}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
+// ── Supabase API Import ──
+const supabaseScript = document.createElement('script');
+supabaseScript.type = 'module';
+supabaseScript.src = 'supabase.js';
+document.head.appendChild(supabaseScript);
+
+async function loadMembers() {
+  if (!window.getMembers) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (!window.getMembers) return setTimeout(loadMembers, 500);
+  }
+  members = await window.getMembers();
+  render();
+}
+
+async function saveMember() {
+  const name = document.getElementById('f-name').value.trim();
+  const gen  = parseInt(document.getElementById('f-gen').value);
+  if (!name) { showToast('Please enter a full name'); return; }
+  if (!gen)  { showToast('Please select a generation'); return; }
+
+  const data = {
+    name,
+    role:    document.getElementById('f-role').value.trim(),
+    gen,
+    born:    document.getElementById('f-born').value.trim(),
+    died:    document.getElementById('f-died').value.trim(),
+    town:    document.getElementById('f-town').value.trim(),
+    known:   document.getElementById('f-known').value.trim(),
+    spouse:  document.getElementById('f-spouse').value.trim(),
+    photo:   document.getElementById('f-photo').value.trim(),
+    bio:     document.getElementById('f-bio').value.trim(),
+    founder: document.getElementById('f-founder').value==='yes',
+    status:  document.getElementById('f-status').value,
+  };
+
+  if (editingId) {
+    await window.updateMember(editingId, data);
+    showToast(`${name} updated`);
+  } else {
+    data.id = 'u'+Date.now();
+    await window.addMember(data);
+    showToast(`${name} added to the tree`);
+  }
+
+  loadMembers();
+  closeForm();
+}
+
+async function deleteMember(id) {
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  if (!confirm(`Remove ${m.name} from the family tree?`)) return;
+  await window.deleteMember(id);
+  loadMembers();
+  showToast(`${m.name} removed`);
+}
+
 // ── Init ──
-load();
+loadMembers();
 window.addEventListener('resize', ()=>requestAnimationFrame(()=>{
   const genNums=[...new Set(members.map(m=>m.gen))].sort((a,b)=>a-b);
   drawLines(genNums);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Family Updates — Magoye Archives</title>
+  <title>Family Updates — Whitmore Archives</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -85,7 +85,7 @@
 <body>
 
 <nav>
-  <a class="nav-brand" href="index.html">Magoye Archives</a>
+  <a class="nav-brand" href="index.html">Whitmore Archives</a>
   <ul class="nav-links" id="navLinks">
     <li><a href="index.html">Home</a></li>
     <li><a href="index.html#biography">Biography</a></li>
@@ -122,29 +122,29 @@
 <footer><span>&copy; <span id="yr"></span> The Magoye Family Archives</span></footer>
 
 <script>
+
 document.getElementById('yr').textContent = new Date().getFullYear();
 document.getElementById('navToggle').addEventListener('click', ()=>document.getElementById('navLinks').classList.toggle('open'));
 
-const STORAGE_KEY = 'wf_updates';
 const TAG_LABELS = {milestone:'Milestone',reunion:'Reunion',memory:'Memory',news:'News',celebration:'Celebration'};
 const TAG_CLASS  = {milestone:'tag-milestone',reunion:'tag-reunion',memory:'tag-memory',news:'tag-news',celebration:'tag-celebration'};
-
-const DEFAULT_UPDATES = [
-  {id:1,tag:'reunion',title:'Magoye Family Reunion 2025',date:'June 14, 2025',rawDate:'2025-06-14',desc:'The Magoye family gathered for a joyful reunion in 2025, celebrating our heritage and strengthening bonds across generations.',author:'Magoye Family'},
-  {id:2,tag:'milestone',title:"Mr Henry Senwanga's Daughters Graduate",date:'May 20, 2025',rawDate:'2025-05-20',desc:'Congratulations to Mr Henry Senwanga whose daughters graduated with honors, making the family proud and inspiring the next generation.',author:'Family Archive'},
-  {id:3,tag:'news',title:'Update Notifications Enabled',date:'March 4, 2026',rawDate:'2026-03-04',desc:'You will now receive notifications when new family updates are posted. Stay tuned for more news and milestones!',author:'Magoye Family'},
-  {id:4,tag:'milestone',title:'Thomas Graduates Medical School',date:'September 7, 2024',rawDate:'2024-09-07',desc:'Thomas Whitmore III became the family\'s first physician, graduating with honors from Johns Hopkins School of Medicine to the immense pride of all four generations present.',author:'James Whitmore II'},
-  {id:5,tag:'news',title:'Farmhouse Restoration Complete',date:'July 19, 2024',rawDate:'2024-07-19',desc:'After three years and remarkable dedication, the original Whitmore homestead on Maple Ridge has been fully restored and designated a Vermont Heritage Site.',author:'James Whitmore II'},
-  {id:6,tag:'celebration',title:'Golden Anniversary: Robert & Helen',date:'April 22, 2024',rawDate:'2024-04-22',desc:'Robert and Helen Whitmore celebrated 50 years of marriage surrounded by children, grandchildren, and the warmth of a family that loves them dearly.',author:'Family Archive'},
-];
 
 let updates = [];
 let currentFilter = 'all';
 
-function load() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  updates = stored ? JSON.parse(stored) : [...DEFAULT_UPDATES];
-  if (!stored) localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_UPDATES));
+// Import Supabase API
+const script = document.createElement('script');
+script.type = 'module';
+script.src = 'supabase.js';
+document.head.appendChild(script);
+
+async function loadUpdates() {
+  // Wait for supabase.js to load
+  if (!window.getUpdates) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (!window.getUpdates) return setTimeout(loadUpdates, 500);
+  }
+  updates = await window.getUpdates();
   renderTimeline();
 }
 
@@ -201,7 +201,8 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-load();
+// Load updates from Supabase
+loadUpdates();
 // Enable notifications for updates
 if ("Notification" in window) {
   if (Notification.permission === "granted") {
