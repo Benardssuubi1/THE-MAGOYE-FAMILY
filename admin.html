@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Whitmore Archives</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#f5f0e8;--parchment:#e8dfc8;--ink:#2a2118;
+      --charcoal:#3d3228;--forest:#3b5140;--moss:#5a7a5f;
+      --gold:#b08c52;--gold-light:#d4aa6a;--rust:#8b4a2b;--warm-grey:#9b8f82;
+      --red:#c0392b;
+      --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--sans);background:#1e1710;color:var(--ink);font-weight:300;min-height:100vh}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--gold)}
+
+    /* LOGIN SCREEN */
+    .login-screen{position:fixed;inset:0;background:linear-gradient(rgba(26,18,8,0.85),rgba(26,18,8,0.85)),url('assets/img 2 fam.jpg') center/cover no-repeat;display:flex;align-items:center;justify-content:center;z-index:9999;padding:2rem}
+    .login-box{background:var(--charcoal);width:100%;max-width:400px;padding:0;border:1px solid rgba(176,140,82,.2)}
+    .login-hd{background:var(--ink);padding:2.5rem 2.5rem 2rem;text-align:center;border-bottom:1px solid rgba(176,140,82,.15)}
+    .login-hd .lock-icon{font-size:2rem;margin-bottom:1rem;color:var(--gold);display:block}
+    .login-hd h1{font-family:var(--serif);font-size:1.8rem;font-weight:300;color:var(--cream)}
+    .login-hd p{font-size:.72rem;letter-spacing:.12em;color:var(--warm-grey);margin-top:.4rem}
+    .login-bd{padding:2rem 2.5rem}
+    .login-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:.5rem}
+    .login-input{width:100%;padding:12px 16px;background:#2a2118;border:1px solid rgba(176,140,82,.2);color:var(--cream);font-family:var(--sans);font-size:.92rem;font-weight:300;outline:none;transition:border-color .25s;margin-bottom:1.2rem}
+    .login-input:focus{border-color:var(--gold)}
+    .login-btn{width:100%;padding:13px;background:var(--forest);color:var(--cream);border:none;font-family:var(--sans);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:background .25s;margin-bottom:1rem}
+    .login-btn:hover{background:var(--moss)}
+    .login-error{color:var(--rust);font-size:.75rem;text-align:center;margin-top:.5rem;min-height:1.2em;letter-spacing:.04em}
+    .login-hint{font-size:.65rem;color:rgba(155,143,130,.4);text-align:center;margin-top:.5rem}
+
+    /* ADMIN LAYOUT — hidden until auth */
+    .admin-app{display:none;min-height:100vh;background:#f0ead8}
+    .admin-app.visible{display:block}
+
+    /* TOP BAR */
+    .admin-bar{background:var(--ink);padding:0 5vw;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(176,140,82,.15);position:sticky;top:0;z-index:100}
+    .admin-bar-brand{display:flex;align-items:center;gap:.8rem}
+    .admin-bar-brand span.badge{background:var(--rust);color:#fff;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px}
+    .admin-bar-brand a{font-family:var(--serif);font-size:1.15rem;color:var(--gold-light);text-decoration:none;font-style:italic}
+    .admin-bar-actions{display:flex;gap:1rem;align-items:center}
+    .admin-bar-actions a{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--warm-grey);text-decoration:none;transition:color .25s}
+    .admin-bar-actions a:hover{color:var(--gold)}
+    .logout-btn{background:transparent;border:1px solid rgba(139,74,43,.4);color:var(--rust);font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;padding:6px 14px;cursor:pointer;font-family:var(--sans);transition:all .25s}
+    .logout-btn:hover{background:rgba(139,74,43,.15)}
+
+    /* DASHBOARD */
+    .admin-main{max-width:1100px;margin:0 auto;padding:40px 5vw 100px}
+    .admin-welcome{margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--parchment)}
+    .admin-welcome h2{font-family:var(--serif);font-size:2rem;font-weight:300;color:var(--charcoal)}
+    .admin-welcome p{font-size:.82rem;color:var(--warm-grey);margin-top:.3rem}
+
+    /* STAT CARDS */
+    .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--parchment);margin-bottom:2.5rem}
+    .stat-card{background:var(--cream);padding:1.4rem;text-align:center}
+    .stat-card strong{display:block;font-family:var(--serif);font-size:2rem;font-weight:300;color:var(--forest)}
+    .stat-card span{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--warm-grey)}
+
+    /* SECTION HEADER */
+    .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding-bottom:.8rem;border-bottom:1px solid var(--parchment);flex-wrap:wrap;gap:.8rem}
+    .section-hd h3{font-family:var(--serif);font-size:1.5rem;font-weight:300;color:var(--charcoal)}
+    .section-hd p{font-size:.72rem;color:var(--warm-grey);margin-top:.15rem}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:.35rem;padding:9px 20px;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;border:none;cursor:pointer;font-family:var(--sans);transition:all .25s;text-decoration:none}
+    .btn-gold{background:var(--gold);color:var(--ink)}
+    .btn-gold:hover{background:var(--gold-light)}
+    .btn-forest{background:var(--forest);color:var(--cream)}
+    .btn-forest:hover{background:var(--moss)}
+    .btn-ghost{background:transparent;border:1px solid rgba(176,140,82,.3);color:var(--gold);font-size:.62rem;padding:7px 14px}
+    .btn-ghost:hover{background:rgba(176,140,82,.1)}
+    .btn-danger{background:transparent;border:1px solid rgba(192,57,43,.3);color:var(--red);font-size:.62rem;padding:7px 14px}
+    .btn-danger:hover{background:rgba(192,57,43,.08)}
+
+    /* TABLE */
+    .data-table{width:100%;border-collapse:collapse;background:var(--cream)}
+    .data-table th{background:var(--charcoal);color:var(--gold);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:10px 14px;text-align:left;font-weight:400}
+    .data-table td{padding:12px 14px;border-bottom:1px solid var(--parchment);font-size:.82rem;color:var(--charcoal);vertical-align:middle}
+    .data-table tr:hover td{background:#ede5d4}
+    .data-table .tag-cell .update-tag{display:inline-block;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;font-weight:500}
+    .update-tag.tag-milestone{background:rgba(59,81,64,.12);color:var(--forest)}
+    .update-tag.tag-reunion{background:rgba(176,140,82,.15);color:var(--gold)}
+    .update-tag.tag-memory{background:rgba(139,74,43,.1);color:var(--rust)}
+    .update-tag.tag-news{background:rgba(61,50,40,.1);color:var(--charcoal)}
+    .update-tag.tag-celebration{background:rgba(176,140,82,.15);color:var(--gold)}
+    .tbl-actions{display:flex;gap:.4rem}
+    .tbl-btn{border:none;cursor:pointer;padding:5px 10px;font-size:.65rem;font-family:var(--sans);letter-spacing:.08em;transition:all .2s}
+    .tbl-edit{background:rgba(59,81,64,.12);color:var(--forest)}
+    .tbl-edit:hover{background:rgba(59,81,64,.25)}
+    .tbl-del{background:rgba(192,57,43,.08);color:var(--red)}
+    .tbl-del:hover{background:rgba(192,57,43,.18)}
+    .empty-row td{text-align:center;color:var(--warm-grey);font-style:italic;padding:2.5rem}
+
+    /* FORM PANEL */
+    .form-panel{background:var(--cream);border:1px solid var(--parchment);margin-bottom:2.5rem;overflow:hidden;display:none}
+    .form-panel.open{display:block}
+    .form-panel-hd{background:var(--forest);padding:1.2rem 1.8rem;display:flex;justify-content:space-between;align-items:center}
+    .form-panel-hd h4{font-family:var(--serif);font-size:1.2rem;font-weight:300;color:var(--cream)}
+    .form-panel-close{background:none;border:none;color:rgba(245,240,232,.6);font-size:1.4rem;cursor:pointer;line-height:1}
+    .form-panel-close:hover{color:var(--cream)}
+    .form-bd{padding:1.8rem}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-group.full{grid-column:1/-1}
+    .form-group label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+    .form-group input,.form-group select,.form-group textarea{font-family:var(--sans);font-size:.88rem;padding:10px 14px;border:1px solid var(--parchment);background:var(--cream);color:var(--ink);outline:none;transition:border-color .25s;font-weight:300}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+    .form-group textarea{resize:vertical;min-height:100px}
+    .form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b08c52' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+    .form-actions{display:flex;gap:.8rem;margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--parchment)}
+
+    /* CHAR COUNT */
+    .char-count{font-size:.62rem;color:var(--warm-grey);text-align:right;margin-top:2px}
+
+    /* SECTION DIVIDER */
+    .admin-section{margin-bottom:3.5rem}
+
+    /* DANGER ZONE */
+    .danger-zone{background:rgba(192,57,43,.05);border:1px solid rgba(192,57,43,.2);padding:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+    .danger-zone p{font-size:.82rem;color:var(--charcoal)}
+    .danger-zone small{font-size:.7rem;color:var(--warm-grey)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:28px;right:28px;background:var(--forest);color:var(--cream);padding:12px 22px;font-size:.75rem;letter-spacing:.08em;z-index:9999;transform:translateX(140%);transition:transform .4s ease;border-left:3px solid var(--gold)}
+    .toast.show{transform:translateX(0)}
+    .toast.error{background:var(--red);border-left-color:#ff6b6b}
+
+    /* ADMIN SETTINGS */
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+
+    @media(max-width:800px){
+      .stat-row{grid-template-columns:1fr 1fr}
+      .form-grid{grid-template-columns:1fr}
+      .form-group.full{grid-column:1}
+      .settings-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:500px){
+      .stat-row{grid-template-columns:1fr 1fr}
+      .admin-bar{padding:0 1rem}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-hd">
+      <span class="lock-icon">🔒</span>
+      <h1>Admin Portal</h1>
+      <p>Whitmore Family Archives</p>
+    </div>
+    <div class="login-bd">
+      <label class="login-label" for="login-pass">Password</label>
+      <input class="login-input" id="login-pass" type="password" placeholder="Enter admin password" autocomplete="current-password" onkeydown="if(event.key==='Enter')attemptLogin()"/>
+      <button class="login-btn" onclick="attemptLogin()">Sign In to Admin</button>
+      <p class="login-error" id="login-error"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN APP ══ -->
+<div class="admin-app" id="adminApp">
+
+  <div class="admin-bar">
+    <div class="admin-bar-brand">
+      <a href="index.html">Whitmore Archives</a>
+      <span class="badge">Admin</span>
+    </div>
+    <div class="admin-bar-actions">
+      <a href="index.html">← View Site</a>
+      <a href="updates.html">Updates Page</a>
+      <a href="family-tree.html">Family Tree</a>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-main">
+
+    <div class="admin-welcome">
+      <h2>Good day, Administrator</h2>
+      <p>Manage updates, family members, and site settings from this panel.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-row">
+      <div class="stat-card"><strong id="s-updates">0</strong><span>Total Updates</span></div>
+      <div class="stat-card"><strong id="s-members">0</strong><span>Family Members</span></div>
+      <div class="stat-card"><strong id="s-gens">0</strong><span>Generations</span></div>
+      <div class="stat-card"><strong id="s-last">—</strong><span>Last Update</span></div>
+    </div>
+
+    <!-- ── UPDATES MANAGEMENT ── -->
+    <div class="admin-section">
+      <div class="section-hd">
+        <div>
+          <h3>Updates Management</h3>
+          <p>Add, edit, or remove news and milestones shown on the public updates page</p>
+        </div>
+        <button class="btn btn-gold" onclick="toggleUpdateForm()">+ New Update</button>
+      </div>
+
+      <!-- ADD/EDIT FORM -->
+      <div class="form-panel" id="updateFormPanel">
+        <div class="form-panel-hd">
+          <h4 id="update-form-title">New Update</h4>
+          <button class="form-panel-close" onclick="toggleUpdateForm(true)">×</button>
+        </div>
+        <div class="form-bd">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Headline / Title *</label>
+              <input type="text" id="uf-title" placeholder="e.g. Annual Family Reunion 2025" oninput="updateCharCount(this,'uf-title-count',80)"/>
+              <div class="char-count" id="uf-title-count">0 / 80</div>
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="uf-tag">
+                <option value="">Choose category…</option>
+                <option value="milestone">Milestone</option>
+                <option value="reunion">Reunion</option>
+                <option value="memory">Memory</option>
+                <option value="news">News</option>
+                <option value="celebration">Celebration</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="uf-date"/>
+            </div>
+            <div class="form-group">
+              <label>Author / Posted By</label>
+              <input type="text" id="uf-author" placeholder="e.g. Robert Whitmore"/>
+            </div>
+            <div class="form-group">
+              <label>Display Date (optional override)</label>
+              <input type="text" id="uf-date-display" placeholder="e.g. June 14, 2025"/>
+            </div>
+            <div class="form-group full">
+              <label>Description *</label>
+              <textarea id="uf-desc" placeholder="Write the update content…" oninput="updateCharCount(this,'uf-desc-count',400)"></textarea>
+              <div class="char-count" id="uf-desc-count">0 / 400</div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-gold" onclick="saveUpdate()">Publish Update</button>
+            <button class="btn btn-ghost" onclick="toggleUpdateForm(true)">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPDATES TABLE -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Author</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="updates-table-body">
+          <tr class="empty-row"><td colspan="5">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── FAMILY MEMBER MANAGEMENT ── -->
+    <div class="admin-section">
+      <div class="section-hd">
+        <div>
+          <h3>Family Members</h3>
+          <p>Quick overview — use the Family Tree page to add or edit members</p>
+        </div>
+        <a href="family-tree.html" class="btn btn-forest">Open Tree Editor →</a>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Generation</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="members-table-body">
+          <tr class="empty-row"><td colspan="5">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="admin-section">
+      <div class="section-hd">
+        <div>
+          <h3>Site Settings</h3>
+          <p>Configure the family name, admin password, and other preferences</p>
+        </div>
+      </div>
+
+      <div class="form-panel" style="display:block">
+        <div class="form-panel-hd" style="background:var(--charcoal)">
+          <h4>General Settings</h4>
+        </div>
+        <div class="form-bd">
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Family Name</label>
+              <input type="text" id="set-family-name" placeholder="e.g. Magoye"/>
+            </div>
+            <div class="form-group">
+              <label>Site Subtitle</label>
+              <input type="text" id="set-subtitle" placeholder="e.g. A Living Chronicle"/>
+            </div>
+            <div class="form-group">
+              <label>Admin Password</label>
+              <input type="password" id="set-password" placeholder="New password…" autocomplete="new-password"/>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="set-password-confirm" placeholder="Repeat new password…" autocomplete="new-password"/>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-forest" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DANGER ZONE ── -->
+    <div class="admin-section">
+      <div class="section-hd"><h3 style="color:var(--red)">Danger Zone</h3></div>
+      <div class="danger-zone">
+        <div><p>Reset all updates to default sample data</p><small>This will remove all custom updates you have added.</small></div>
+        <button class="btn btn-danger" onclick="resetUpdates()">Reset Updates</button>
+      </div>
+      <div class="danger-zone" style="margin-top:2px">
+        <div><p>Reset family tree to default members</p><small>This will remove all custom family members you have added.</small></div>
+        <button class="btn btn-danger" onclick="resetMembers()">Reset Family Tree</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── AUTH ──
+const ADMIN_PASS_KEY = 'wf_admin_pass';
+const DEFAULT_PASS = 'themagoyes';
+const SESSION_KEY = 'wf_admin_session';
+
+function getAdminPass() { return localStorage.getItem(ADMIN_PASS_KEY) || DEFAULT_PASS; }
+
+function attemptLogin() {
+  const val = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  if (val === getAdminPass()) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').classList.add('visible');
+    document.body.style.background = '#f0ead8';
+    init();
+  } else {
+    err.textContent = 'Incorrect password. Please try again.';
+    document.getElementById('login-pass').value = '';
+    setTimeout(()=>err.textContent='', 3500);
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminApp').classList.remove('visible');
+  document.getElementById('login-pass').value = '';
+}
+
+// Check session on load
+if (sessionStorage.getItem(SESSION_KEY)) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').classList.add('visible');
+  document.body.style.background = '#f0ead8';
+}
+
+// ── STORAGE KEYS ──
+const U_KEY = 'wf_updates';
+const M_KEY = 'wf_members';
+
+const DEFAULT_UPDATES = [
+  {id:1,tag:'reunion',title:'Annual Whitmore Summer Reunion',date:'June 14, 2025',rawDate:'2025-06-14',desc:'Over 80 family members gathered at Maple Ridge Farm for the 32nd annual reunion — a day of storytelling, old photographs, and the legendary Whitmore chili cook-off.',author:'Robert Whitmore'},
+  {id:2,tag:'milestone',title:'Clara & James Welcome Twins',date:'March 3, 2025',rawDate:'2025-03-03',desc:'Rosalind and Hugh Whitmore were born on a crisp March morning, bringing the fifth generation to a joyful six members.',author:'James Whitmore II'},
+  {id:3,tag:'memory',title:'In Memory: Aunt Dorothy, 1938–2024',date:'November 28, 2024',rawDate:'2024-11-28',desc:'We lovingly remember Dorothy Whitmore-Cross, our family historian and keeper of stories.',author:'Family Archive'},
+  {id:4,tag:'milestone',title:'Thomas Graduates Medical School',date:'September 7, 2024',rawDate:'2024-09-07',desc:'Thomas Whitmore III became the family\'s first physician, graduating with honors from Johns Hopkins School of Medicine.',author:'James Whitmore II'},
+  {id:5,tag:'news',title:'Farmhouse Restoration Complete',date:'July 19, 2024',rawDate:'2024-07-19',desc:'After three years, the original Whitmore homestead on Maple Ridge has been fully restored and designated a Vermont Heritage Site.',author:'James Whitmore II'},
+  {id:6,tag:'celebration',title:'Golden Anniversary: Robert & Helen',date:'April 22, 2024',rawDate:'2024-04-22',desc:'Robert and Helen Whitmore celebrated 50 years of marriage surrounded by family.',author:'Family Archive'},
+];
+
+const TAG_LABELS = {milestone:'Milestone',reunion:'Reunion',memory:'Memory',news:'News',celebration:'Celebration'};
+const TAG_CLASS  = {milestone:'tag-milestone',reunion:'tag-reunion',memory:'tag-memory',news:'tag-news',celebration:'tag-celebration'};
+const GEN_ROMAN  = ['','I','II','III','IV','V','VI','VII','VIII'];
+
+let updates = [];
+let members = [];
+let editingUpdateId = null;
+
+function loadUpdates() {
+  const stored = localStorage.getItem(U_KEY);
+  updates = stored ? JSON.parse(stored) : [...DEFAULT_UPDATES];
+  if (!stored) localStorage.setItem(U_KEY, JSON.stringify(DEFAULT_UPDATES));
+}
+
+function loadMembers() {
+  const stored = localStorage.getItem(M_KEY);
+  members = stored ? JSON.parse(stored) : [];
+}
+
+function saveUpdates() { localStorage.setItem(U_KEY, JSON.stringify(updates)); }
+function saveMembers() { localStorage.setItem(M_KEY, JSON.stringify(members)); }
+
+function updateStats() {
+  document.getElementById('s-updates').textContent = updates.length;
+  document.getElementById('s-members').textContent = members.length;
+  document.getElementById('s-gens').textContent = [...new Set(members.map(m=>m.gen))].length;
+  const latest = updates[0];
+  document.getElementById('s-last').textContent = latest ? (latest.date||latest.rawDate||'—').split(',')[0] : '—';
+}
+
+// ── UPDATES TABLE ──
+function renderUpdatesTable() {
+  const tbody = document.getElementById('updates-table-body');
+  if (!updates.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No updates yet. Add one above.</td></tr>';
+    return;
+  }
+  const sorted = [...updates].sort((a,b)=>(b.rawDate||'').localeCompare(a.rawDate||''));
+  tbody.innerHTML = sorted.map(u => `
+    <tr>
+      <td style="max-width:280px"><strong style="font-family:var(--serif);font-weight:400;font-size:.95rem">${u.title}</strong></td>
+      <td class="tag-cell"><span class="update-tag ${TAG_CLASS[u.tag]||'tag-news'}">${TAG_LABELS[u.tag]||u.tag}</span></td>
+      <td style="color:var(--warm-grey);font-size:.8rem">${u.date||u.rawDate||'—'}</td>
+      <td style="color:var(--warm-grey);font-size:.8rem">${u.author||'—'}</td>
+      <td>
+        <div class="tbl-actions">
+          <button class="tbl-btn tbl-edit" onclick="editUpdate(${u.id})">Edit</button>
+          <button class="tbl-btn tbl-del" onclick="deleteUpdate(${u.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ── UPDATES FORM ──
+function toggleUpdateForm(forceClose) {
+  const panel = document.getElementById('updateFormPanel');
+  if (forceClose || panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    clearUpdateForm();
+    editingUpdateId = null;
+    document.getElementById('update-form-title').textContent = 'New Update';
+  } else {
+    panel.classList.add('open');
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+function clearUpdateForm() {
+  ['uf-title','uf-author','uf-date-display','uf-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('uf-tag').value='';
+  document.getElementById('uf-date').value='';
+  document.getElementById('uf-title-count').textContent='0 / 80';
+  document.getElementById('uf-desc-count').textContent='0 / 400';
+}
+
+function editUpdate(id) {
+  const u = updates.find(x=>x.id===id);
+  if (!u) return;
+  editingUpdateId = id;
+  document.getElementById('update-form-title').textContent = 'Edit Update';
+  document.getElementById('uf-title').value    = u.title||'';
+  document.getElementById('uf-tag').value      = u.tag||'';
+  document.getElementById('uf-date').value     = u.rawDate||'';
+  document.getElementById('uf-author').value   = u.author||'';
+  document.getElementById('uf-date-display').value = u.date||'';
+  document.getElementById('uf-desc').value     = u.desc||'';
+  updateCharCount(document.getElementById('uf-title'),'uf-title-count',80);
+  updateCharCount(document.getElementById('uf-desc'),'uf-desc-count',400);
+  document.getElementById('updateFormPanel').classList.add('open');
+  document.getElementById('updateFormPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function saveUpdate() {
+  const title  = document.getElementById('uf-title').value.trim();
+  const tag    = document.getElementById('uf-tag').value;
+  const rawDate= document.getElementById('uf-date').value;
+  const desc   = document.getElementById('uf-desc').value.trim();
+  if (!title) { showToast('Please enter a title','error'); return; }
+  if (!tag)   { showToast('Please choose a category','error'); return; }
+  if (!desc)  { showToast('Please write a description','error'); return; }
+
+  const displayDate = document.getElementById('uf-date-display').value.trim() ||
+    (rawDate ? new Date(rawDate+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '');
+
+  const data = {
+    title, tag, rawDate,
+    date: displayDate,
+    author: document.getElementById('uf-author').value.trim(),
+    desc,
+  };
+
+  if (editingUpdateId !== null) {
+    const idx = updates.findIndex(u=>u.id===editingUpdateId);
+    if (idx>-1) updates[idx] = {...updates[idx], ...data};
+    showToast('Update saved');
+  } else {
+    data.id = Date.now();
+    updates.unshift(data);
+    showToast('Update published');
+  }
+
+  saveUpdates(); renderUpdatesTable(); updateStats();
+  toggleUpdateForm(true);
+}
+
+function deleteUpdate(id) {
+  const u = updates.find(x=>x.id===id);
+  if (!u || !confirm(`Delete "${u.title}"? This cannot be undone.`)) return;
+  updates = updates.filter(x=>x.id!==id);
+  saveUpdates(); renderUpdatesTable(); updateStats();
+  showToast('Update deleted');
+}
+
+// ── MEMBERS TABLE ──
+function renderMembersTable() {
+  const tbody = document.getElementById('members-table-body');
+  if (!members.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No family members. <a href="family-tree.html" style="color:var(--forest)">Add via Family Tree →</a></td></tr>';
+    return;
+  }
+  const sorted = [...members].sort((a,b)=>a.gen-b.gen||a.name.localeCompare(b.name));
+  tbody.innerHTML = sorted.map(m => `
+    <tr>
+      <td><strong style="font-family:var(--serif);font-weight:400">${m.name}</strong></td>
+      <td style="font-size:.8rem;color:var(--warm-grey)">${m.role||'—'}</td>
+      <td><span style="font-size:.7rem;background:rgba(59,81,64,.1);color:var(--forest);padding:2px 8px">Gen ${GEN_ROMAN[m.gen]||m.gen}</span></td>
+      <td><span style="font-size:.7rem;color:${m.status==='living'?'var(--forest)':'var(--warm-grey)'}">${m.status==='living'?'● Living':'○ Deceased'}</span></td>
+      <td><a href="family-tree.html" class="tbl-btn tbl-edit" style="text-decoration:none;display:inline-block">Edit in Tree</a></td>
+    </tr>`).join('');
+}
+
+// ── SETTINGS ──
+function saveSettings() {
+  const fName = document.getElementById('set-family-name').value.trim();
+  const sub   = document.getElementById('set-subtitle').value.trim();
+  const pass  = document.getElementById('set-password').value;
+  const passC = document.getElementById('set-password-confirm').value;
+
+  if (fName) localStorage.setItem('wf_family_name', fName);
+  if (sub)   localStorage.setItem('wf_subtitle', sub);
+
+  if (pass) {
+    if (pass !== passC) { showToast('Passwords do not match','error'); return; }
+    if (pass.length < 6) { showToast('Password must be at least 6 characters','error'); return; }
+    localStorage.setItem(ADMIN_PASS_KEY, pass);
+    showToast('Password updated — remember your new password!');
+  } else {
+    showToast('Settings saved');
+  }
+
+  document.getElementById('set-password').value = '';
+  document.getElementById('set-password-confirm').value = '';
+}
+
+// ── DANGER ──
+function resetUpdates() {
+  if (!confirm('Reset all updates to default sample data? This cannot be undone.')) return;
+  localStorage.setItem(U_KEY, JSON.stringify(DEFAULT_UPDATES));
+  loadUpdates(); renderUpdatesTable(); updateStats();
+  showToast('Updates reset to defaults');
+}
+
+function resetMembers() {
+  if (!confirm('This will reset the family tree to defaults on the Family Tree page.')) return;
+  localStorage.removeItem(M_KEY);
+  loadMembers(); renderMembersTable(); updateStats();
+  showToast('Family tree reset (reload family-tree.html to see changes)');
+}
+
+// ── HELPERS ──
+function updateCharCount(el, countId, max) {
+  const len = el.value.length;
+  const display = document.getElementById(countId);
+  display.textContent = `${len} / ${max}`;
+  display.style.color = len > max ? 'var(--red)' : 'var(--warm-grey)';
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' '+type : '');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ── INIT ──
+function init() {
+  loadUpdates();
+  loadMembers();
+  renderUpdatesTable();
+  renderMembersTable();
+  updateStats();
+
+  // load settings into fields
+  const fn = localStorage.getItem('wf_family_name');
+  const sb = localStorage.getItem('wf_subtitle');
+  if (fn) document.getElementById('set-family-name').value = fn;
+  if (sb) document.getElementById('set-subtitle').value = sb;
+}
+
+// Auto-init if already logged in
+if (sessionStorage.getItem(SESSION_KEY)) init();
+</script>
+</body>
+</html>
