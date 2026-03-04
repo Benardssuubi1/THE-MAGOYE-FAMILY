@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Family Updates — Whitmore Archives</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#f5f0e8;--parchment:#e8dfc8;--ink:#2a2118;
+      --charcoal:#3d3228;--forest:#3b5140;--moss:#5a7a5f;
+      --gold:#b08c52;--gold-light:#d4aa6a;--rust:#8b4a2b;--warm-grey:#9b8f82;
+      --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--sans);background:var(--cream);color:var(--ink);font-weight:300;line-height:1.7;overflow-x:hidden}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--gold)}
+
+    nav{position:sticky;top:0;z-index:999;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(42,33,24,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(176,140,82,0.2)}
+    .nav-brand{font-family:var(--serif);font-size:1.2rem;color:var(--gold-light);text-decoration:none;font-style:italic;letter-spacing:.08em}
+    .nav-links{display:flex;gap:2rem;list-style:none;align-items:center}
+    .nav-links a{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--parchment);text-decoration:none;transition:color .3s}
+    .nav-links a:hover,.nav-links a.active{color:var(--gold-light)}
+    .nav-links .btn-nav{background:var(--forest);color:var(--cream)!important;padding:6px 16px;font-size:.65rem}
+    .nav-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer}
+    .nav-toggle span{display:block;width:22px;height:1.5px;background:var(--parchment)}
+
+    .page-header{background:var(--charcoal);padding:60px 5vw 50px;text-align:center;border-bottom:3px solid var(--forest)}
+    .page-header .eyebrow{font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem}
+    .page-header h1{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.5rem);font-weight:300;color:var(--cream)}
+    .page-header h1 em{font-style:italic;color:var(--gold-light)}
+    .page-header p{font-size:.85rem;color:rgba(232,223,200,.6);margin-top:.8rem}
+
+    /* FILTER BAR */
+    .filter-bar{background:var(--ink);padding:14px 5vw;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;border-bottom:1px solid rgba(176,140,82,.12)}
+    .filter-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--warm-grey)}
+    .filter-btn{background:transparent;border:1px solid rgba(176,140,82,.25);color:var(--warm-grey);padding:5px 14px;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;font-family:var(--sans);transition:all .25s}
+    .filter-btn:hover,.filter-btn.active{background:rgba(176,140,82,.15);color:var(--gold-light);border-color:var(--gold)}
+    .filter-count{font-size:.68rem;color:var(--warm-grey);margin-left:auto;letter-spacing:.06em}
+
+    /* MAIN */
+    main{max-width:1100px;margin:0 auto;padding:60px 5vw 100px}
+
+    /* TIMELINE LAYOUT */
+    .timeline{display:flex;flex-direction:column;gap:0}
+    .timeline-year-group{margin-bottom:3rem}
+    .year-heading{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem}
+    .year-heading h2{font-family:var(--serif);font-size:2.5rem;font-weight:300;color:var(--charcoal);line-height:1}
+    .year-heading::after{content:'';flex:1;height:1px;background:var(--parchment)}
+
+    .update-item{display:grid;grid-template-columns:80px 1fr;gap:0;margin-bottom:2px;background:var(--cream)}
+    .update-item:hover .update-body{background:#ede5d4}
+    .update-date-col{background:var(--charcoal);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem .5rem;text-align:center;flex-shrink:0}
+    .u-month{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold)}
+    .u-day{font-family:var(--serif);font-size:2rem;font-weight:300;color:var(--cream);line-height:1}
+    .update-body{padding:1.5rem 2rem;border:1px solid var(--parchment);border-left:none;transition:background .25s;cursor:default}
+    .update-tag{display:inline-block;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px;margin-bottom:.6rem;font-weight:500}
+    .tag-milestone{background:rgba(59,81,64,.12);color:var(--forest)}
+    .tag-reunion{background:rgba(176,140,82,.15);color:var(--gold)}
+    .tag-memory{background:rgba(139,74,43,.1);color:var(--rust)}
+    .tag-news{background:rgba(61,50,40,.1);color:var(--charcoal)}
+    .tag-celebration{background:rgba(176,140,82,.15);color:var(--gold)}
+    .u-title{font-family:var(--serif);font-size:1.3rem;color:var(--charcoal);margin-bottom:.5rem;line-height:1.2}
+    .u-desc{font-size:.88rem;color:var(--warm-grey);line-height:1.7;max-width:680px}
+    .u-author{font-size:.65rem;letter-spacing:.08em;color:rgba(155,143,130,.5);margin-top:.8rem}
+
+    .empty-state{text-align:center;padding:80px 20px;color:var(--warm-grey)}
+    .empty-state h3{font-family:var(--serif);font-size:1.8rem;font-weight:300;color:var(--charcoal);margin-bottom:.5rem}
+    .empty-state p{font-size:.88rem;margin-bottom:1.5rem}
+
+    footer{background:var(--ink);padding:36px 5vw;border-top:3px solid var(--forest);text-align:center}
+    footer span{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(155,143,130,.4)}
+
+    @media(max-width:640px){
+      .nav-links{position:fixed;top:64px;left:0;right:0;background:rgba(42,33,24,.98);flex-direction:column;padding:0;max-height:0;overflow:hidden;transition:max-height .4s;gap:0}
+      .nav-links.open{max-height:400px}
+      .nav-links a{display:block;padding:1rem;border-bottom:1px solid rgba(176,140,82,.1);width:100%;text-align:center}
+      .nav-toggle{display:flex}
+      .update-item{grid-template-columns:60px 1fr}
+      .update-body{padding:1.2rem}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">Whitmore Archives</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="index.html#biography">Biography</a></li>
+    <li><a href="updates.html" class="active">Updates</a></li>
+    <li><a href="family-tree.html">Family Tree</a></li>
+    <li><a href="admin.html" class="btn-nav">Admin</a></li>
+  </ul>
+  <div class="nav-toggle" id="navToggle"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="page-header">
+  <p class="eyebrow">News &amp; Milestones</p>
+  <h1>Magoye <em>Updates</em></h1>
+  <p>A living record of our milestones, memories, and moments that matter</p>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Filter:</span>
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="milestone">Milestones</button>
+  <button class="filter-btn" data-filter="reunion">Reunions</button>
+  <button class="filter-btn" data-filter="memory">Memories</button>
+  <button class="filter-btn" data-filter="news">News</button>
+  <button class="filter-btn" data-filter="celebration">Celebrations</button>
+  <span class="filter-count" id="filter-count"></span>
+</div>
+
+<main>
+  <div class="timeline" id="timeline">
+    <!-- populated by JS -->
+  </div>
+</main>
+
+<footer><span>&copy; <span id="yr"></span> The Magoye Family Archives</span></footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+document.getElementById('navToggle').addEventListener('click', ()=>document.getElementById('navLinks').classList.toggle('open'));
+
+const STORAGE_KEY = 'wf_updates';
+const TAG_LABELS = {milestone:'Milestone',reunion:'Reunion',memory:'Memory',news:'News',celebration:'Celebration'};
+const TAG_CLASS  = {milestone:'tag-milestone',reunion:'tag-reunion',memory:'tag-memory',news:'tag-news',celebration:'tag-celebration'};
+
+const DEFAULT_UPDATES = [
+  {id:1,tag:'reunion',title:'Annual Whitmore Summer Reunion',date:'June 14, 2025',rawDate:'2025-06-14',desc:'Over 80 family members gathered at Maple Ridge Farm for the 32nd annual reunion — a day of storytelling, old photographs, and the legendary Whitmore chili cook-off.',author:'Robert Whitmore'},
+  {id:2,tag:'milestone',title:'Clara & James Welcome Twins',date:'March 3, 2025',rawDate:'2025-03-03',desc:'The newest additions to our family — Rosalind and Hugh Whitmore — were born on a crisp March morning, bringing the fifth generation to a joyful six members.',author:'James Whitmore II'},
+  {id:3,tag:'memory',title:'In Memory: Aunt Dorothy, 1938–2024',date:'November 28, 2024',rawDate:'2024-11-28',desc:'We lovingly remember Dorothy Whitmore-Cross, our family historian and keeper of stories, whose quiet wisdom shaped the character of so many of us.',author:'Family Archive'},
+  {id:4,tag:'milestone',title:'Thomas Graduates Medical School',date:'September 7, 2024',rawDate:'2024-09-07',desc:'Thomas Whitmore III became the family\'s first physician, graduating with honors from Johns Hopkins School of Medicine to the immense pride of all four generations present.',author:'James Whitmore II'},
+  {id:5,tag:'news',title:'Farmhouse Restoration Complete',date:'July 19, 2024',rawDate:'2024-07-19',desc:'After three years and remarkable dedication, the original Whitmore homestead on Maple Ridge has been fully restored and designated a Vermont Heritage Site.',author:'James Whitmore II'},
+  {id:6,tag:'celebration',title:'Golden Anniversary: Robert & Helen',date:'April 22, 2024',rawDate:'2024-04-22',desc:'Robert and Helen Whitmore celebrated 50 years of marriage surrounded by children, grandchildren, and the warmth of a family that loves them dearly.',author:'Family Archive'},
+];
+
+let updates = [];
+let currentFilter = 'all';
+
+function load() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  updates = stored ? JSON.parse(stored) : [...DEFAULT_UPDATES];
+  if (!stored) localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_UPDATES));
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const filtered = currentFilter === 'all' ? updates : updates.filter(u=>u.tag===currentFilter);
+  const count = filtered.length;
+  document.getElementById('filter-count').textContent = `${count} update${count!==1?'s':''}`;
+
+  const timeline = document.getElementById('timeline');
+  if (!filtered.length) {
+    timeline.innerHTML = `<div class="empty-state"><h3>No updates found</h3><p>No updates match the selected filter, or no updates have been posted yet.</p><a href="admin.html" style="font-size:.75rem;color:var(--forest);text-decoration:none;border-bottom:1px solid var(--forest)">Go to Admin to add updates →</a></div>`;
+    return;
+  }
+
+  // group by year
+  const sorted = [...filtered].sort((a,b)=>(b.rawDate||'').localeCompare(a.rawDate||''));
+  const byYear = {};
+  sorted.forEach(u => {
+    const year = u.rawDate ? u.rawDate.substring(0,4) : (u.date||'').match(/\d{4}/)?.[0] || 'Other';
+    if (!byYear[year]) byYear[year]=[];
+    byYear[year].push(u);
+  });
+
+  timeline.innerHTML = Object.entries(byYear).map(([year, items]) => `
+    <div class="timeline-year-group">
+      <div class="year-heading"><h2>${year}</h2></div>
+      ${items.map(u => {
+        const d = u.rawDate ? new Date(u.rawDate) : null;
+        const month = d ? d.toLocaleString('en',{month:'short'}).toUpperCase() : '';
+        const day   = d ? d.getDate() : '';
+        return `
+        <div class="update-item" data-tag="${u.tag}">
+          <div class="update-date-col">
+            ${month ? `<span class="u-month">${month}</span><span class="u-day">${day}</span>` : `<span class="u-day" style="font-size:1rem">${u.date?.split(' ').slice(0,2).join(' ')||'—'}</span>`}
+          </div>
+          <div class="update-body">
+            <span class="update-tag ${TAG_CLASS[u.tag]||'tag-news'}">${TAG_LABELS[u.tag]||u.tag}</span>
+            <h3 class="u-title">${u.title}</h3>
+            <p class="u-desc">${u.desc}</p>
+            ${u.author ? `<p class="u-author">Posted by ${u.author}</p>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderTimeline();
+  });
+});
+
+load();
+</script>
+</body>
+</html>

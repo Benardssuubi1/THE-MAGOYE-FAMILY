@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Family Tree — Magoye Archives</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#f5f0e8;--parchment:#e8dfc8;--ink:#2a2118;
+      --charcoal:#3d3228;--forest:#3b5140;--moss:#5a7a5f;
+      --gold:#b08c52;--gold-light:#d4aa6a;--rust:#8b4a2b;--warm-grey:#9b8f82;
+      --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--sans);background:var(--cream);color:var(--ink);font-weight:300;overflow-x:hidden}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--gold)}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:999;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(42,33,24,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(176,140,82,0.2)}
+    .nav-brand{font-family:var(--serif);font-size:1.2rem;color:var(--gold-light);text-decoration:none;font-style:italic;letter-spacing:.08em}
+    .nav-links{display:flex;gap:2rem;list-style:none;align-items:center}
+    .nav-links a{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--parchment);text-decoration:none;transition:color .3s}
+    .nav-links a:hover,.nav-links a.active{color:var(--gold-light)}
+    .nav-links .btn-nav{background:var(--forest);color:var(--cream)!important;padding:6px 16px;font-size:.65rem}
+    .nav-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer}
+    .nav-toggle span{display:block;width:22px;height:1.5px;background:var(--parchment)}
+
+    /* PAGE HEADER */
+    .page-header{background:var(--charcoal);padding:60px 5vw 50px;text-align:center;border-bottom:3px solid var(--forest)}
+    .page-header .eyebrow{font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem}
+    .page-header h1{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.5rem);font-weight:300;color:var(--cream)}
+    .page-header h1 em{font-style:italic;color:var(--gold-light)}
+    .page-header p{font-size:.85rem;color:rgba(232,223,200,.6);margin-top:.8rem;letter-spacing:.04em}
+
+    /* TOOLBAR */
+    .toolbar{background:var(--ink);padding:14px 5vw;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-bottom:1px solid rgba(176,140,82,.15)}
+    .toolbar-info{font-size:.72rem;color:var(--warm-grey);letter-spacing:.06em}
+    .toolbar-info strong{color:var(--gold-light)}
+    .toolbar-actions{display:flex;gap:.8rem;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:9px 20px;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;border:none;cursor:pointer;font-family:var(--sans);transition:all .25s}
+    .btn-gold{background:var(--gold);color:var(--ink)}
+    .btn-gold:hover{background:var(--gold-light)}
+    .btn-forest{background:var(--forest);color:var(--cream)}
+    .btn-forest:hover{background:var(--moss)}
+    .btn-ghost{background:transparent;border:1px solid rgba(176,140,82,.35);color:var(--gold);font-size:.65rem;padding:7px 16px}
+    .btn-ghost:hover{background:rgba(176,140,82,.1)}
+
+    /* TREE CANVAS AREA */
+    .tree-area{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='.6' fill='%23b08c52' opacity='.08'/%3E%3C/svg%3E") repeat,#f0ead8;min-height:calc(100vh - 200px);overflow:auto;position:relative;padding:40px 40px 80px}
+
+    /* TREE SVG CONNECTIONS */
+    #tree-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+    #tree-svg line, #tree-svg path{stroke:rgba(176,140,82,.4);stroke-width:1.5;fill:none}
+
+    /* GENERATIONS */
+    .tree-canvas{position:relative;min-width:1000px}
+    .gen-row{display:flex;gap:20px;justify-content:center;margin-bottom:0;padding:0 20px}
+    .gen-label-row{text-align:center;margin-bottom:12px}
+    .gen-label{display:inline-block;font-size:.58rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);padding:3px 14px;border:1px solid rgba(176,140,82,.3);background:rgba(176,140,82,.07)}
+    .gen-spacer{height:48px}
+
+    /* MEMBER CARD */
+    .member-card{position:relative;width:150px;flex-shrink:0;background:var(--cream);border:1px solid var(--parchment);padding:14px 12px;text-align:center;cursor:pointer;transition:all .25s;user-select:none}
+    .member-card:hover{background:#ede5d4;border-color:var(--gold);transform:translateY(-2px);box-shadow:0 8px 24px rgba(42,33,24,.12)}
+    .member-card.founder{background:var(--charcoal);border-color:var(--gold)}
+    .member-card.founder .m-name,.member-card.founder .m-years{color:var(--cream)}
+    .member-card.founder .m-role{color:var(--gold)}
+    .member-card.deceased{opacity:.75}
+    .member-card.selected{border-color:var(--forest);box-shadow:0 0 0 2px var(--forest)}
+    .m-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--parchment);margin:0 auto 8px;display:block;background:var(--parchment)}
+    .member-card.founder .m-avatar{border-color:var(--gold);width:56px;height:56px}
+    .m-name{font-family:var(--serif);font-size:.92rem;font-weight:400;color:var(--charcoal);display:block;line-height:1.2;margin-bottom:2px}
+    .m-role{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:block}
+    .m-years{font-size:.65rem;color:var(--warm-grey);display:block;margin-top:2px}
+    .m-gen-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--forest);color:var(--cream);font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;white-space:nowrap}
+    .member-card .card-actions{position:absolute;top:4px;right:4px;display:flex;gap:3px;opacity:0;transition:opacity .2s}
+    .member-card:hover .card-actions{opacity:1}
+    .card-btn{width:22px;height:22px;border:none;border-radius:2px;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:background .2s}
+    .card-btn-edit{background:rgba(176,140,82,.2);color:var(--gold)}
+    .card-btn-del{background:rgba(139,74,43,.15);color:var(--rust)}
+    .card-btn:hover{filter:brightness(1.2)}
+
+    /* SPOUSE CONNECTOR */
+    .couple-group{display:flex;align-items:center;gap:0}
+    .spouse-line{width:24px;height:1px;background:var(--gold);opacity:.5;flex-shrink:0}
+
+    /* MODAL */
+    .overlay{position:fixed;inset:0;background:rgba(42,33,24,.82);backdrop-filter:blur(8px);z-index:5000;display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;pointer-events:none;transition:opacity .3s}
+    .overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--cream);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;position:relative;transform:translateY(20px);transition:transform .35s}
+    .overlay.open .modal{transform:translateY(0)}
+    .modal-hd{background:var(--charcoal);padding:1.8rem 2.2rem 1.4rem;display:flex;gap:1.2rem;align-items:center}
+    .modal-hd img{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0}
+    .modal-hd-txt h2{font-family:var(--serif);font-size:1.5rem;font-weight:300;color:var(--cream)}
+    .modal-hd-txt span{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+    .modal-bd{padding:1.8rem 2.2rem 2.2rem}
+    .modal-bd p{font-size:.88rem;line-height:1.85;color:var(--charcoal);margin-bottom:1rem}
+    .modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--parchment);margin-top:1.2rem}
+    .meta-item{background:var(--cream);padding:.8rem 1rem}
+    .meta-item label{display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+    .meta-item span{font-family:var(--serif);font-size:.95rem;color:var(--charcoal)}
+    .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--warm-grey);font-size:1.4rem;cursor:pointer;line-height:1;transition:color .2s}
+    .modal-close:hover{color:var(--gold-light)}
+
+    /* ADD MEMBER FORM MODAL */
+    .form-modal{background:var(--cream);width:100%;max-width:600px;max-height:92vh;overflow-y:auto;position:relative;transform:translateY(20px);transition:transform .35s}
+    .overlay.open .form-modal{transform:translateY(0)}
+    .form-hd{background:var(--forest);padding:1.6rem 2rem;display:flex;justify-content:space-between;align-items:center}
+    .form-hd h2{font-family:var(--serif);font-size:1.5rem;font-weight:300;color:var(--cream)}
+    .form-hd span{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,240,232,.6)}
+    .form-bd{padding:2rem}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+    .form-group{display:flex;flex-direction:column;gap:6px}
+    .form-group.full{grid-column:1/-1}
+    .form-group label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+    .form-group input,.form-group select,.form-group textarea{font-family:var(--sans);font-size:.88rem;padding:10px 14px;border:1px solid var(--parchment);background:var(--cream);color:var(--ink);outline:none;transition:border-color .25s;font-weight:300}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+    .form-group textarea{resize:vertical;min-height:90px}
+    .form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b08c52' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+    .form-actions{display:flex;gap:.8rem;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--parchment)}
+    .avatar-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--parchment);margin-top:6px}
+    .help-text{font-size:.7rem;color:var(--warm-grey);margin-top:3px}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:28px;right:28px;background:var(--forest);color:var(--cream);padding:12px 20px;font-size:.75rem;letter-spacing:.08em;z-index:9999;transform:translateX(120%);transition:transform .4s ease;border-left:3px solid var(--gold)}
+    .toast.show{transform:translateX(0)}
+
+    /* LEGEND */
+    .tree-legend{position:fixed;bottom:20px;left:20px;background:rgba(42,33,24,.9);backdrop-filter:blur(8px);padding:12px 16px;border:1px solid rgba(176,140,82,.2);z-index:100;display:flex;flex-direction:column;gap:6px}
+    .legend-item{display:flex;align-items:center;gap:8px;font-size:.6rem;letter-spacing:.08em;color:var(--warm-grey)}
+    .l-dot{width:10px;height:10px;border-radius:50%}
+    .l-line{width:20px;height:1px;background:rgba(176,140,82,.5)}
+
+    /* EMPTY STATE */
+    .empty-state{text-align:center;padding:60px 20px;color:var(--warm-grey)}
+    .empty-state h3{font-family:var(--serif);font-size:1.5rem;font-weight:300;color:var(--charcoal);margin-bottom:.5rem}
+    .empty-state p{font-size:.85rem;margin-bottom:1.5rem}
+
+    footer{background:var(--ink);padding:36px 5vw;border-top:3px solid var(--forest);text-align:center}
+    footer span{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(155,143,130,.4)}
+
+    @media(max-width:640px){
+      .nav-links{position:fixed;top:64px;left:0;right:0;background:rgba(42,33,24,.98);flex-direction:column;padding:0;max-height:0;overflow:hidden;transition:max-height .4s;gap:0}
+      .nav-links.open{max-height:400px}
+      .nav-links a{display:block;padding:1rem;border-bottom:1px solid rgba(176,140,82,.1);width:100%;text-align:center}
+      .nav-toggle{display:flex}
+      .form-grid{grid-template-columns:1fr}
+      .form-group.full{grid-column:1}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">Magoye Archives</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="index.html#biography">Biography</a></li>
+    <li><a href="updates.html">Updates</a></li>
+    <li><a href="family-tree.html" class="active">Family Tree</a></li>
+    <li><a href="admin.html" class="btn-nav">Admin</a></li>
+  </ul>
+  <div class="nav-toggle" id="navToggle"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="page-header">
+  <p class="eyebrow">Lineage &amp; Legacy</p>
+  <h1>The Magoye <em>Family Tree</em></h1>
+  <p>Starting with Christopher Kitalimusango Magoye & Deborah Nalumansi &nbsp;·&nbsp; Click any member to learn their story &nbsp;·&nbsp; Add new members below</p>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-info">Showing <strong id="member-count">0</strong> members across <strong id="gen-count">0</strong> generations</div>
+  <div class="toolbar-actions">
+    <button class="btn btn-ghost" onclick="resetToDefaults()">↺ Reset Defaults</button>
+    <button class="btn btn-forest" onclick="openAddModal()">+ Add Family Member</button>
+  </div>
+</div>
+
+<div class="tree-area" id="tree-area">
+  <svg id="tree-svg"></svg>
+  <div class="tree-canvas" id="tree-canvas">
+    <!-- rendered by JS -->
+  </div>
+</div>
+
+<div class="tree-legend">
+  <div class="legend-item"><div class="l-dot" style="background:var(--charcoal);border:1px solid var(--gold)"></div> Founder</div>
+  <div class="legend-item"><div class="l-dot" style="background:var(--cream);border:1px solid var(--parchment)"></div> Living</div>
+  <div class="legend-item"><div class="l-dot" style="background:var(--warm-grey);opacity:.6"></div> Deceased</div>
+  <div class="legend-item"><div class="l-line"></div> Partner</div>
+  <div class="legend-item">✦ Click card for bio</div>
+</div>
+
+<!-- VIEW MEMBER MODAL -->
+<div class="overlay" id="viewOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeView()">×</button>
+    <div class="modal-hd">
+      <img id="v-img" src="" alt=""/>
+      <div class="modal-hd-txt">
+        <h2 id="v-name"></h2>
+        <span id="v-role"></span>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <p id="v-bio"></p>
+      <div class="modal-meta">
+        <div class="meta-item"><label>Born</label><span id="v-born"></span></div>
+        <div class="meta-item"><label>Hometown</label><span id="v-town"></span></div>
+        <div class="meta-item"><label>Known For</label><span id="v-known"></span></div>
+        <div class="meta-item"><label>Generation</label><span id="v-gen"></span></div>
+      </div>
+      <div style="margin-top:1.5rem;display:flex;gap:.8rem">
+        <button class="btn btn-forest" onclick="editFromView()" style="font-size:.65rem;padding:8px 16px">Edit Member</button>
+        <button class="btn" onclick="deleteFromView()" style="background:rgba(139,74,43,.15);color:var(--rust);font-size:.65rem;padding:8px 16px">Remove Member</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MEMBER MODAL -->
+<div class="overlay" id="formOverlay">
+  <div class="form-modal">
+    <div class="form-hd">
+      <div>
+        <h2 id="form-title">Add Family Member</h2>
+        <span id="form-subtitle">New member will appear in the tree</span>
+      </div>
+      <button class="modal-close" onclick="closeForm()" style="position:static;color:rgba(245,240,232,.6)">×</button>
+    </div>
+    <div class="form-bd">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Full Name *</label>
+          <input type="text" id="f-name" placeholder="e.g. Margaret Whitmore"/>
+        </div>
+        <div class="form-group">
+          <label>Role / Relation</label>
+          <input type="text" id="f-role" placeholder="e.g. Daughter of Harold"/>
+        </div>
+        <div class="form-group">
+          <label>Generation *</label>
+          <select id="f-gen">
+            <option value="">Select generation…</option>
+            <option value="1">Generation I — Founders</option>
+            <option value="2">Generation II</option>
+            <option value="3">Generation III</option>
+            <option value="4">Generation IV</option>
+            <option value="5">Generation V</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Born (year or full date)</label>
+          <input type="text" id="f-born" placeholder="e.g. 1902 or Jan 4, 1902"/>
+        </div>
+        <div class="form-group">
+          <label>Died (leave blank if living)</label>
+          <input type="text" id="f-died" placeholder="e.g. 1978 or living"/>
+        </div>
+        <div class="form-group">
+          <label>Hometown</label>
+          <input type="text" id="f-town" placeholder="e.g. Burlington, Vermont"/>
+        </div>
+        <div class="form-group">
+          <label>Known For</label>
+          <input type="text" id="f-known" placeholder="e.g. Farmer & veteran"/>
+        </div>
+        <div class="form-group">
+          <label>Partner / Spouse Name</label>
+          <input type="text" id="f-spouse" placeholder="e.g. Catherine Rose"/>
+        </div>
+        <div class="form-group">
+          <label>Photo</label>
+          <input type="url" id="f-photo" placeholder="https://…" oninput="previewPhoto(this.value)" style="margin-bottom:8px"/>
+          <input type="file" id="f-photo-file" accept="image/*" style="margin-bottom:8px"/>
+          <div id="photo-drop" style="border:2px dashed var(--gold);padding:12px;text-align:center;color:var(--gold);margin-bottom:8px;cursor:pointer">Drag & drop image here</div>
+          <span class="help-text">Paste a URL, select a file, or drag an image. Leave blank for default avatar.</span>
+        </div>
+        <div class="form-group">
+          <label>Preview</label>
+          <img id="photo-preview" class="avatar-preview" src="https://i.pravatar.cc/80?img=1" alt="Preview" style="max-width:120px;max-height:120px;border-radius:50%;border:1px solid var(--gold)"/>
+        </div>
+        <div class="form-group full">
+          <label>Biography</label>
+          <textarea id="f-bio" placeholder="Write a short biography…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Is this a Founder?</label>
+          <select id="f-founder">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="living">Living</option>
+            <option value="deceased">Deceased</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="saveMember()">Save Member</button>
+        <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <span>&copy; <span id="yr"></span> The Magoye Family Archives</span>
+</footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+
+// Image upload and drag-and-drop logic
+const photoFileInput = document.getElementById('f-photo-file');
+const photoDrop = document.getElementById('photo-drop');
+const photoPreview = document.getElementById('photo-preview');
+const photoUrlInput = document.getElementById('f-photo');
+
+photoFileInput.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      photoPreview.src = evt.target.result;
+      photoUrlInput.value = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+photoDrop.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  photoDrop.style.background = 'rgba(176,140,82,0.08)';
+});
+photoDrop.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  photoDrop.style.background = '';
+});
+photoDrop.addEventListener('drop', function(e) {
+  e.preventDefault();
+  photoDrop.style.background = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      photoPreview.src = evt.target.result;
+      photoUrlInput.value = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+photoDrop.addEventListener('click', function() {
+  photoFileInput.click();
+});
+
+function previewPhoto(val) {
+  if (val) {
+    photoPreview.src = val;
+  } else {
+    photoPreview.src = 'assets/unknown img.jpeg';
+  }
+}
+
+// ── Data ──
+const STORAGE_KEY = 'wf_members';
+
+
+const DEFAULT_MEMBERS = [
+  {id:'f1',name:'Kitunkunya',role:'First Founder',gen:1,born:'Unknown',died:'Unknown',town:'Uganda',known:'First known ancestor',bio:'Kitunkunya is the earliest known ancestor of the Magoye family.',photo:'assets/unknown img.jpeg',spouse:'',founder:true,status:'deceased'},
+  {id:'f2',name:'Lubuzi Kitalimusango',role:'Founder',gen:2,born:'Unknown',died:'1931',town:'Uganda',known:'Son of Kitunkunya',bio:'Lubuzi Kitalimusango, son of Kitunkunya, was a key founder of the family. He passed away in 1931.',photo:'assets/unknown img.jpeg',spouse:'Rebecca Namutebi',founder:true,status:'deceased'},
+  {id:'f3',name:'Rebecca Namutebi',role:'Matriarch',gen:2,born:'Unknown',died:'Unknown',town:'Uganda',known:'Wife of Lubuzi Kitalimusango',bio:'Rebecca Namutebi was the wife of Lubuzi Kitalimusango and mother to Amos Lule Nkunga.',photo:'assets/unknown img.jpeg',spouse:'Lubuzi Kitalimusango',founder:true,status:'deceased'},
+  {id:'f4',name:'Amos Lule Nkunga',role:'Patriarch',gen:3,born:'Unknown',died:'Unknown',town:'Uganda',known:'Son of Lubuzi & Rebecca',bio:'Amos Lule Nkunga, son of Lubuzi Kitalimusango and Rebecca Namutebi, continued the family lineage.',photo:'assets/unknown img.jpeg',spouse:'Tabitha Ndibazza',founder:true,status:'deceased'},
+  {id:'f5',name:'Tabitha Ndibazza',role:'Matriarch',gen:3,born:'Unknown',died:'Unknown',town:'Uganda',known:'Wife of Amos Lule Nkunga',bio:'Tabitha Ndibazza was the wife of Amos Lule Nkunga and mother to Christopher Kitalimusango Magoye.',photo:'assets/unknown img.jpeg',spouse:'Amos Lule Nkunga',founder:true,status:'deceased'},
+  {id:'f6',name:'Christopher Kitalimusango Magoye',role:'Patriarch',gen:4,born:'Unknown',died:'Unknown',town:'Uganda',known:'Son of Amos & Tabitha',bio:'Christopher Kitalimusango Magoye, son of Amos Lule Nkunga and Tabitha Ndibazza, married Deborah Nalumansi and together they had 14 children.',photo:'assets/unknown img.jpeg',spouse:'Deborah Nalumansi',founder:true,status:'deceased'},
+  {id:'f7',name:'Deborah Nalumansi',role:'Matriarch',gen:4,born:'Unknown',died:'Unknown',town:'Uganda',known:'Daughter of Yakobo Kaweesa & Agatha Najjuma',bio:'Deborah Nalumansi, daughter of Yakobo Kaweesa and Agatha Najjuma, married Christopher Kitalimusango Magoye and gave birth to 14 children.',photo:'assets/unknown img.jpeg',spouse:'Christopher Kitalimusango Magoye',founder:true,status:'deceased'},
+  {id:'f8',name:'Yakobo Kaweesa',role:'Ancestor',gen:3,born:'Unknown',died:'Unknown',town:'Uganda',known:'Father of Deborah Nalumansi',bio:'Yakobo Kaweesa is the father of Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'Agatha Najjuma',founder:false,status:'deceased'},
+  {id:'f9',name:'Agatha Najjuma',role:'Ancestor',gen:3,born:'Unknown',died:'Unknown',town:'Uganda',known:'Mother of Deborah Nalumansi',bio:'Agatha Najjuma is the mother of Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'Yakobo Kaweesa',founder:false,status:'deceased'},
+  {id:'c1',name:'Kenneth Wills Kibago Magoye',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'First child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c2',name:'Lubuzi John Owen Magoye',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Second child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c3',name:'Amos Lule Semwanga',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Third child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c4',name:'Amon Edwin Serunyonyi',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Fourth child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c5',name:'Japheth Lutaaya',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Fifth child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c6',name:'Charles Muwanga Magoye',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Sixth child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c7',name:'Muwanga Wilberforce',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Seventh child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c8',name:'Wamungo Fred Magoye',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Eighth child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c9',name:'Eric Kitandwe Musisi',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Ninth child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c10',name:'Nakityo Margaret Kwamagezi',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Tenth child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c11',name:'Ndibazza Tabitha',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Eleventh child of Christopher Kitalimusango Magoye and Deborah Nalumansi.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c12',name:'Unknown Child 1',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Twelfth child of Christopher Kitalimusango Magoye and Deborah Nalumansi. Name not recorded.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c13',name:'Unknown Child 2',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Thirteenth child of Christopher Kitalimusango Magoye and Deborah Nalumansi. Name not recorded.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+  {id:'c14',name:'Unknown Child 3',role:'Child of Christopher & Deborah',gen:5,born:'Unknown',died:'',town:'Uganda',known:'',bio:'Fourteenth child of Christopher Kitalimusango Magoye and Deborah Nalumansi. Name not recorded.',photo:'assets/unknown img.jpeg',spouse:'',founder:false,status:'living'},
+];
+
+let members = [];
+let editingId = null;
+let viewingId = null;
+
+function load() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  members = stored ? JSON.parse(stored) : [...DEFAULT_MEMBERS];
+  render();
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+}
+
+function resetToDefaults() {
+  if (!confirm('Reset tree to default members? This cannot be undone.')) return;
+  members = [...DEFAULT_MEMBERS];
+  save(); render();
+  showToast('Tree reset to defaults');
+}
+
+// ── Render Tree ──
+function render() {
+  const canvas = document.getElementById('tree-canvas');
+  const genNums = [...new Set(members.map(m=>m.gen))].sort((a,b)=>a-b);
+  document.getElementById('member-count').textContent = members.length;
+  document.getElementById('gen-count').textContent = genNums.length;
+
+  if (!members.length) {
+    canvas.innerHTML = `<div class="empty-state"><h3>No family members yet</h3><p>Click "Add Family Member" to begin building your tree.</p><button class="btn btn-forest" onclick="openAddModal()">+ Add First Member</button></div>`;
+    document.getElementById('tree-svg').innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  const cardPositions = {}; // id -> {x,y,w,h}
+
+  genNums.forEach((g, gi) => {
+    const genMembers = members.filter(m=>m.gen===g);
+    const genLabel = g===1 ? 'Generation I — Founders' : `Generation ${toRoman(g)}`;
+    html += `<div class="gen-label-row"><span class="gen-label">${genLabel}</span></div>`;
+    html += `<div class="gen-row" id="gen-row-${g}">`;
+
+    genMembers.forEach(m => {
+      const years = m.born ? (m.died ? `${extractYear(m.born)} – ${m.died}` : `${extractYear(m.born)} – present`) : '';
+      const avatarSrc = m.photo || '';
+      const classes = ['member-card', m.founder?'founder':'', m.status==='deceased'?'deceased':'', m.id===editingId?'selected':''].filter(Boolean).join(' ');
+
+      html += `
+        <div class="${classes}" id="card-${m.id}" onclick="viewMember('${m.id}')">
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="card-btn card-btn-edit" onclick="openEditModal('${m.id}')" title="Edit">✎</button>
+            <button class="card-btn card-btn-del" onclick="deleteMember('${m.id}')" title="Remove">✕</button>
+          </div>
+          <img class="m-avatar" src="${avatarSrc}" alt="${m.name}" onerror="this.src='https://i.pravatar.cc/80?img=1'"/>
+          <span class="m-name">${m.name}</span>
+          <span class="m-role">${m.role||''}</span>
+          <span class="m-years">${years}</span>
+          ${m.spouse ? `<span style="font-size:.58rem;color:var(--warm-grey);margin-top:3px;display:block">♥ ${m.spouse}</span>` : ''}
+        </div>`;
+    });
+
+    html += '</div>';
+    if (gi < genNums.length-1) html += '<div class="gen-spacer"></div>';
+  });
+
+  canvas.innerHTML = html;
+
+  // draw connector lines after DOM paints
+  requestAnimationFrame(() => drawLines(genNums));
+}
+
+function drawLines(genNums) {
+  const svg = document.getElementById('tree-svg');
+  const area = document.getElementById('tree-area');
+  const areaRect = area.getBoundingClientRect();
+  const scrollX = area.scrollLeft; const scrollY = area.scrollTop;
+
+  svg.innerHTML = '';
+
+  // draw vertical line from each gen row to next
+  for (let i=0; i<genNums.length-1; i++) {
+    const g = genNums[i];
+    const row = document.getElementById(`gen-row-${g}`);
+    const nextRow = document.getElementById(`gen-row-${genNums[i+1]}`);
+    if (!row || !nextRow) continue;
+
+    const rowRect = row.getBoundingClientRect();
+    const nextRect = nextRow.getBoundingClientRect();
+    const rowCenterX = (rowRect.left + rowRect.right)/2 - areaRect.left + scrollX;
+    const rowBottomY = rowRect.bottom - areaRect.top + scrollY;
+    const nextTopY   = nextRect.top - areaRect.top + scrollY;
+    const midY = (rowBottomY + nextTopY)/2;
+
+    // vertical down from mid of parent row
+    const line1 = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line1.setAttribute('x1', rowCenterX); line1.setAttribute('y1', rowBottomY);
+    line1.setAttribute('x2', rowCenterX); line1.setAttribute('y2', midY);
+    svg.appendChild(line1);
+
+    // gather child cards
+    const childMembers = members.filter(m=>m.gen===genNums[i+1]);
+    if (childMembers.length > 1) {
+      const firstCard = document.getElementById(`card-${childMembers[0].id}`);
+      const lastCard  = document.getElementById(`card-${childMembers[childMembers.length-1].id}`);
+      if (firstCard && lastCard) {
+        const fRect = firstCard.getBoundingClientRect();
+        const lRect = lastCard.getBoundingClientRect();
+        const leftX  = (fRect.left + fRect.right)/2 - areaRect.left + scrollX;
+        const rightX = (lRect.left + lRect.right)/2 - areaRect.left + scrollX;
+        // horizontal bar
+        const hLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+        hLine.setAttribute('x1',leftX); hLine.setAttribute('y1',midY);
+        hLine.setAttribute('x2',rightX); hLine.setAttribute('y2',midY);
+        svg.appendChild(hLine);
+        // vertical line from horiz bar down to center of row
+        const vLine2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+        vLine2.setAttribute('x1',rowCenterX); vLine2.setAttribute('y1',midY);
+        vLine2.setAttribute('x2',rowCenterX); vLine2.setAttribute('y2',nextTopY);
+        svg.appendChild(vLine2);
+        // drop lines to each child
+        childMembers.forEach(cm => {
+          const card = document.getElementById(`card-${cm.id}`);
+          if (!card) return;
+          const cr = card.getBoundingClientRect();
+          const cx = (cr.left+cr.right)/2 - areaRect.left + scrollX;
+          const drop = document.createElementNS('http://www.w3.org/2000/svg','line');
+          drop.setAttribute('x1',cx); drop.setAttribute('y1',midY);
+          drop.setAttribute('x2',cx); drop.setAttribute('y2',nextTopY);
+          svg.appendChild(drop);
+        });
+      }
+    } else if (childMembers.length===1) {
+      const card = document.getElementById(`card-${childMembers[0].id}`);
+      if (card) {
+        const cr = card.getBoundingClientRect();
+        const cx = (cr.left+cr.right)/2 - areaRect.left + scrollX;
+        const drop = document.createElementNS('http://www.w3.org/2000/svg','line');
+        drop.setAttribute('x1',cx); drop.setAttribute('y1',rowBottomY);
+        drop.setAttribute('x2',cx); drop.setAttribute('y2',nextTopY);
+        svg.appendChild(drop);
+      }
+    }
+  }
+}
+
+// ── View Member ──
+function viewMember(id) {
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  viewingId = id;
+  const years = m.born ? (m.died ? `${m.born} – ${m.died}` : `${m.born} – present`) : '—';
+  const avatarSrc = m.photo || AVATAR_POOL[0];
+  document.getElementById('v-img').src   = avatarSrc;
+  document.getElementById('v-name').textContent  = m.name;
+  document.getElementById('v-role').textContent  = m.role||'Family Member';
+  document.getElementById('v-bio').textContent   = m.bio||'No biography added yet.';
+  document.getElementById('v-born').textContent  = m.born||'—';
+  document.getElementById('v-town').textContent  = m.town||'—';
+  document.getElementById('v-known').textContent = m.known||'—';
+  document.getElementById('v-gen').textContent   = `Generation ${toRoman(m.gen)}`;
+  document.getElementById('viewOverlay').classList.add('open');
+}
+function closeView(){ document.getElementById('viewOverlay').classList.remove('open'); viewingId=null; }
+function editFromView(){ const id=viewingId; closeView(); openEditModal(id); }
+function deleteFromView(){ const id=viewingId; closeView(); deleteMember(id); }
+
+document.getElementById('viewOverlay').addEventListener('click',e=>{if(e.target.id==='viewOverlay')closeView()});
+
+// ── Add / Edit ──
+function openAddModal() {
+  editingId = null;
+  document.getElementById('form-title').textContent = 'Add Family Member';
+  document.getElementById('form-subtitle').textContent = 'New member will appear in the tree';
+  clearForm();
+  document.getElementById('formOverlay').classList.add('open');
+}
+
+function openEditModal(id) {
+  editingId = id;
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  document.getElementById('form-title').textContent = 'Edit Family Member';
+  document.getElementById('form-subtitle').textContent = m.name;
+  document.getElementById('f-name').value   = m.name||'';
+  document.getElementById('f-role').value   = m.role||'';
+  document.getElementById('f-gen').value    = m.gen||'';
+  document.getElementById('f-born').value   = m.born||'';
+  document.getElementById('f-died').value   = m.died||'';
+  document.getElementById('f-town').value   = m.town||'';
+  document.getElementById('f-known').value  = m.known||'';
+  document.getElementById('f-spouse').value = m.spouse||'';
+  document.getElementById('f-photo').value  = m.photo||'';
+  document.getElementById('f-bio').value    = m.bio||'';
+  document.getElementById('f-founder').value= m.founder?'yes':'no';
+  document.getElementById('f-status').value = m.status||'living';
+  document.getElementById('photo-preview').src = m.photo || 'assets/unknown img.jpeg';
+  document.getElementById('f-photo-file').value = '';
+  document.getElementById('formOverlay').classList.add('open');
+}
+
+function closeForm() {
+  document.getElementById('formOverlay').classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('formOverlay').addEventListener('click',e=>{if(e.target.id==='formOverlay')closeForm()});
+
+function clearForm() {
+  ['f-name','f-role','f-born','f-died','f-town','f-known','f-spouse','f-photo','f-bio'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-gen').value='';
+  document.getElementById('f-founder').value='no';
+  document.getElementById('f-status').value='living';
+  document.getElementById('photo-preview').src=AVATAR_POOL[0];
+}
+
+function previewPhoto(url) {
+  if (url) { document.getElementById('photo-preview').src=url; }
+  else { document.getElementById('photo-preview').src=AVATAR_POOL[0]; }
+}
+
+function saveMember() {
+  const name = document.getElementById('f-name').value.trim();
+  const gen  = parseInt(document.getElementById('f-gen').value);
+  if (!name) { showToast('Please enter a full name'); return; }
+  if (!gen)  { showToast('Please select a generation'); return; }
+
+  const data = {
+    name,
+    role:    document.getElementById('f-role').value.trim(),
+    gen,
+    born:    document.getElementById('f-born').value.trim(),
+    died:    document.getElementById('f-died').value.trim(),
+    town:    document.getElementById('f-town').value.trim(),
+    known:   document.getElementById('f-known').value.trim(),
+    spouse:  document.getElementById('f-spouse').value.trim(),
+    photo:   document.getElementById('f-photo').value.trim(),
+    bio:     document.getElementById('f-bio').value.trim(),
+    founder: document.getElementById('f-founder').value==='yes',
+    status:  document.getElementById('f-status').value,
+  };
+
+  if (editingId) {
+    const idx = members.findIndex(m=>m.id===editingId);
+    if (idx>-1) members[idx] = {...members[idx], ...data};
+    showToast(`${name} updated`);
+  } else {
+    data.id = 'u'+Date.now();
+    members.push(data);
+    showToast(`${name} added to the tree`);
+  }
+
+  save(); render(); closeForm();
+}
+
+function deleteMember(id) {
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  if (!confirm(`Remove ${m.name} from the family tree?`)) return;
+  members = members.filter(x=>x.id!==id);
+  save(); render();
+  showToast(`${m.name} removed`);
+}
+
+// ── Helpers ──
+function toRoman(n){const r=['','I','II','III','IV','V','VI','VII','VIII','IX','X'];return r[n]||n}
+function extractYear(s){const m=s&&s.match(/\d{4}/);return m?m[0]:s||''}
+function hashStr(s){let h=0;for(let c of s)h=(Math.imul(31,h)+c.charCodeAt(0))|0;return Math.abs(h)}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+// ── Init ──
+load();
+window.addEventListener('resize', ()=>requestAnimationFrame(()=>{
+  const genNums=[...new Set(members.map(m=>m.gen))].sort((a,b)=>a-b);
+  drawLines(genNums);
+}));
+</script>
+</body>
+</html>
