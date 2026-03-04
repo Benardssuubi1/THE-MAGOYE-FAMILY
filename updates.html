@@ -130,9 +130,9 @@ const TAG_LABELS = {milestone:'Milestone',reunion:'Reunion',memory:'Memory',news
 const TAG_CLASS  = {milestone:'tag-milestone',reunion:'tag-reunion',memory:'tag-memory',news:'tag-news',celebration:'tag-celebration'};
 
 const DEFAULT_UPDATES = [
-  {id:1,tag:'reunion',title:'Annual Whitmore Summer Reunion',date:'June 14, 2025',rawDate:'2025-06-14',desc:'Over 80 family members gathered at Maple Ridge Farm for the 32nd annual reunion — a day of storytelling, old photographs, and the legendary Whitmore chili cook-off.',author:'Robert Whitmore'},
-  {id:2,tag:'milestone',title:'Clara & James Welcome Twins',date:'March 3, 2025',rawDate:'2025-03-03',desc:'The newest additions to our family — Rosalind and Hugh Whitmore — were born on a crisp March morning, bringing the fifth generation to a joyful six members.',author:'James Whitmore II'},
-  {id:3,tag:'memory',title:'In Memory: Aunt Dorothy, 1938–2024',date:'November 28, 2024',rawDate:'2024-11-28',desc:'We lovingly remember Dorothy Whitmore-Cross, our family historian and keeper of stories, whose quiet wisdom shaped the character of so many of us.',author:'Family Archive'},
+  {id:1,tag:'reunion',title:'Magoye Family Reunion 2025',date:'June 14, 2025',rawDate:'2025-06-14',desc:'The Magoye family gathered for a joyful reunion in 2025, celebrating our heritage and strengthening bonds across generations.',author:'Magoye Family'},
+  {id:2,tag:'milestone',title:"Mr Henry Senwanga's Daughters Graduate",date:'May 20, 2025',rawDate:'2025-05-20',desc:'Congratulations to Mr Henry Senwanga whose daughters graduated with honors, making the family proud and inspiring the next generation.',author:'Family Archive'},
+  {id:3,tag:'news',title:'Update Notifications Enabled',date:'March 4, 2026',rawDate:'2026-03-04',desc:'You will now receive notifications when new family updates are posted. Stay tuned for more news and milestones!',author:'Magoye Family'},
   {id:4,tag:'milestone',title:'Thomas Graduates Medical School',date:'September 7, 2024',rawDate:'2024-09-07',desc:'Thomas Whitmore III became the family\'s first physician, graduating with honors from Johns Hopkins School of Medicine to the immense pride of all four generations present.',author:'James Whitmore II'},
   {id:5,tag:'news',title:'Farmhouse Restoration Complete',date:'July 19, 2024',rawDate:'2024-07-19',desc:'After three years and remarkable dedication, the original Whitmore homestead on Maple Ridge has been fully restored and designated a Vermont Heritage Site.',author:'James Whitmore II'},
   {id:6,tag:'celebration',title:'Golden Anniversary: Robert & Helen',date:'April 22, 2024',rawDate:'2024-04-22',desc:'Robert and Helen Whitmore celebrated 50 years of marriage surrounded by children, grandchildren, and the warmth of a family that loves them dearly.',author:'Family Archive'},
@@ -202,6 +202,20 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 load();
+// Enable notifications for updates
+if ("Notification" in window) {
+  if (Notification.permission === "granted") {
+    new Notification("Magoye Family Updates", {body: "Updates loaded. You will be notified of new milestones!"});
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        new Notification("Magoye Family Updates", {body: "Updates loaded. You will be notified of new milestones!"});
+      }
+    });
+  }
+} else {
+  alert("Updates loaded! You will be notified of new milestones.");
+}
 </script>
 </body>
 </html>
